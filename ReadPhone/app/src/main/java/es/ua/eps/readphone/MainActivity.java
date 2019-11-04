@@ -27,9 +27,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,new String[]{
+                        Manifest.permission.READ_PHONE_STATE,
+                        Manifest.permission.ACCESS_NETWORK_STATE,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                },REQUEST_PHONE_INFO_PERMISSION);
+                return;
+            }
+        }
+
         textView = findViewById(R.id.infoTextView);
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        gsmCellLocation = new GsmCellLocation();
+        gsmCellLocation = (GsmCellLocation) telephonyManager.getCellLocation();
 
         // Information variables
         String conectadoState;
@@ -49,15 +60,7 @@ public class MainActivity extends AppCompatActivity {
         int lac;
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,new String[]{
-                        Manifest.permission.READ_PHONE_STATE,
-                        Manifest.permission.ACCESS_NETWORK_STATE
-                },REQUEST_PHONE_INFO_PERMISSION);
-                return;
-            }
-        }
+
 
         conectionType = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? telephonyManager.getDataNetworkType() : -1;
 
