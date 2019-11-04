@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         conectionType = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? telephonyManager.getDataNetworkType() : -1;
+        String conectionTypeinString = getConectionTypeString(conectionType);
 
         imei = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? telephonyManager.getImei() : "NO DATA";
 
@@ -93,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         String allInformation = "Estado de los datos: " + conectadoState + "\n"
-                + "Tipo de conexión: " + conectionType + "\n"
+                + "Tipo de conexión: " + conectionTypeinString + "\n"
                 + " IMEI: " + imei + "\n"
                 + " Operador de la red (físico): " + networkOperatorName + "\n"
                 + " Operador de la SIM (virtual): " + simOperatorName + "\n"
@@ -123,5 +124,61 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             }
         }
+    }
+
+    private String getConectionTypeString(int conectionType) {
+        String conectionTypeinString;
+
+        switch (conectionType) {
+            case TelephonyManager.NETWORK_TYPE_GPRS:
+                conectionTypeinString = "GPRS";
+                break;
+            case TelephonyManager.NETWORK_TYPE_EDGE:
+                conectionTypeinString = "EDGE";
+                break;
+            case TelephonyManager.NETWORK_TYPE_UMTS:
+                conectionTypeinString = "UMTS";
+                break;
+            case TelephonyManager.NETWORK_TYPE_HSDPA:
+                conectionTypeinString = "HSDPA";
+                break;
+            case TelephonyManager.NETWORK_TYPE_HSUPA:
+                conectionTypeinString = "HSUPA";
+                break;
+            case TelephonyManager.NETWORK_TYPE_HSPA:
+                conectionTypeinString = "HSPA";
+                break;
+            case TelephonyManager.NETWORK_TYPE_CDMA:
+                conectionTypeinString = "CDMA";
+                break;
+            case TelephonyManager.NETWORK_TYPE_EVDO_0:
+                conectionTypeinString = "EVDO_0";
+                break;
+            case TelephonyManager.NETWORK_TYPE_EVDO_A:
+                conectionTypeinString = "EVDO_A";
+                break;
+            case TelephonyManager.NETWORK_TYPE_EVDO_B:
+                conectionTypeinString = "EVDO_B";
+                break;
+            case TelephonyManager.NETWORK_TYPE_1xRTT:
+                conectionTypeinString = "1xRTT";
+                break;
+            case TelephonyManager.NETWORK_TYPE_IDEN:
+                conectionTypeinString = "IDEN";
+                break;
+            case TelephonyManager.NETWORK_TYPE_LTE:
+                conectionTypeinString = "LTE";
+                break;
+            case TelephonyManager.NETWORK_TYPE_EHRPD:
+                conectionTypeinString = "EHRPD";
+                break;
+            case TelephonyManager.NETWORK_TYPE_HSPAP:
+                conectionTypeinString = "HSPAP";
+                break;
+            default:
+                conectionTypeinString = "NO RECOGNISED";
+        }
+
+        return conectionTypeinString;
     }
 }
