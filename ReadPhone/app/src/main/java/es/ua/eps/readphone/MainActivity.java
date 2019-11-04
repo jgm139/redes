@@ -21,9 +21,10 @@ public class MainActivity extends AppCompatActivity {
     TelephonyManager telephonyManager;
     private static final int REQUEST_PHONE_INFO_PERMISSION = 200;
     GsmCellLocation gsmCellLocation;
+
     // Information variables
     String conectadoState;
-    int conectionType;
+    String conectionType;
     String imei;
     String networkOperatorName;
     String simOperatorName;
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     String isoCodeCountrySim;
     String softwareVersionIMEI;
     String answeringNumer;
-    int networkType;
+    String networkType;
     String roamingState;
     int cellID;
     int lac;
@@ -60,13 +61,7 @@ public class MainActivity extends AppCompatActivity {
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         gsmCellLocation = (GsmCellLocation) telephonyManager.getCellLocation();
 
-
-
-
-
-
-        conectionType = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? telephonyManager.getDataNetworkType() : -1;
-        String conectionTypeinString = getConectionTypeString(conectionType);
+        conectionType = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? getConectionTypeString(telephonyManager.getDataNetworkType()) : "NO DATA";
 
         imei = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? telephonyManager.getImei() : "NO DATA";
 
@@ -78,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         isoCodeCountrySim = telephonyManager.getSimCountryIso();
         softwareVersionIMEI = telephonyManager.getDeviceSoftwareVersion();
         answeringNumer = telephonyManager.getVoiceMailNumber();
-        networkType = telephonyManager.getNetworkType();
+        networkType = getNetworkTypeString(telephonyManager.getNetworkType());
         cellID = gsmCellLocation.getCid();
         lac = gsmCellLocation.getLac();
 
@@ -100,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         String allInformation = "Estado de los datos: " + conectadoState + "\n"
-                + "Tipo de conexión: " + conectionTypeinString + "\n"
+                + "Tipo de conexión: " + conectionType + "\n"
                 + " IMEI: " + imei + "\n"
                 + " Operador de la red (físico): " + networkOperatorName + "\n"
                 + " Operador de la SIM (virtual): " + simOperatorName + "\n"
@@ -130,6 +125,27 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             }
         }
+    }
+
+    private String getNetworkTypeString(int networkType) {
+        String networkTypeinString = getConectionTypeString(networkType);
+
+        if (networkTypeinString.equals("NO RECOGNISED")) {
+            switch (networkType) {
+                case TelephonyManager.NETWORK_TYPE_GSM:
+                    networkTypeinString = "GSM";
+                    break;
+                case TelephonyManager.NETWORK_TYPE_TD_SCDMA:
+                    networkTypeinString = "TD SCDMA";
+                    break;
+                case TelephonyManager.NETWORK_TYPE_IWLAN:
+                    networkTypeinString = "IWLAN";
+                    break;
+                default:
+            }
+        }
+
+        return networkTypeinString;
     }
 
     private String getConectionTypeString(int conectionType) {
