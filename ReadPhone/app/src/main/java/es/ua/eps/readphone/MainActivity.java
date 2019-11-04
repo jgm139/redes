@@ -46,6 +46,15 @@ public class MainActivity extends AppCompatActivity {
 
         textView = findViewById(R.id.infoTextView);
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        init();
+    }
+
+    private void init(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,new String[]{
@@ -53,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
                         Manifest.permission.ACCESS_NETWORK_STATE,
                         Manifest.permission.ACCESS_COARSE_LOCATION
                 },REQUEST_PHONE_INFO_PERMISSION);
-
+                return;
             }
         }
 
@@ -112,7 +121,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         textView.setText(allInformation);
-
     }
 
     @Override
