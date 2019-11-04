@@ -21,11 +21,29 @@ public class MainActivity extends AppCompatActivity {
     TelephonyManager telephonyManager;
     private static final int REQUEST_PHONE_INFO_PERMISSION = 200;
     GsmCellLocation gsmCellLocation;
+    // Information variables
+    String conectadoState;
+    int conectionType;
+    String imei;
+    String networkOperatorName;
+    String simOperatorName;
+    String imsi;
+    String simSerial;
+    String isoCodeCountryNetwork;
+    String isoCodeCountrySim;
+    String softwareVersionIMEI;
+    String answeringNumer;
+    int networkType;
+    String roamingState;
+    int cellID;
+    int lac;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        textView = findViewById(R.id.infoTextView);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
@@ -34,30 +52,15 @@ public class MainActivity extends AppCompatActivity {
                         Manifest.permission.ACCESS_NETWORK_STATE,
                         Manifest.permission.ACCESS_COARSE_LOCATION
                 },REQUEST_PHONE_INFO_PERMISSION);
-                return;
+
             }
         }
 
-        textView = findViewById(R.id.infoTextView);
+
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         gsmCellLocation = (GsmCellLocation) telephonyManager.getCellLocation();
 
-        // Information variables
-        String conectadoState;
-        int conectionType;
-        String imei;
-        String networkOperatorName;
-        String simOperatorName;
-        String imsi;
-        String simSerial;
-        String isoCodeCountryNetwork;
-        String isoCodeCountrySim;
-        String softwareVersionIMEI;
-        String answeringNumer;
-        int networkType;
-        String roamingState;
-        int cellID;
-        int lac;
+
 
 
 
