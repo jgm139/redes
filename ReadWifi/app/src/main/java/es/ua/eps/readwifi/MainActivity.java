@@ -1,8 +1,5 @@
 package es.ua.eps.readwifi;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -10,13 +7,25 @@ import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PHONE_INFO_PERMISSION = 10;
@@ -62,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     private void init() {
         // Comprobamos los permisos de la aplicación para utilizar los componentes requeridos
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ){
                 // En caso de que el usuario aún no haya dado permiso a la aplicación
                 // le pedimos que lo haga
                 ActivityCompat.requestPermissions(this,new String[]{
@@ -103,25 +112,36 @@ public class MainActivity extends AppCompatActivity {
 
         this.is_hidden = wifiInfo.getHiddenSSID() ? "Network is hidden" : "Network is visible";
 
-        String allInformation = "SSID: " + ssid + "\n\n"
-                + "BSSID: " + bssid + "\n\n"
-                + " WiFi speed: " + wifi_speed + " Mbps \n\n"
-                + " WiFi strength: " + wifi_strength + " dBm\n\n"
-                + " Encryption: " + encryption + "\n\n"
-                + " Frecuency: " + frecuency + "\n\n"
-                + " Channel: " + channel + "\n\n"
-                + " IP: " + ip + "\n\n"
-                + " Netmask: " + netmask + "\n\n"
-                + " Gateway: " + gateway + "\n\n"
-                + " DHPC Server: " + dhcp_server + "\n\n"
-                + " DNS1: " + dns1 + "\n\n"
-                + " DNS2: " + dns2 + "\n\n"
-                + " DHCP lease: " + dhcp_lease + " (hh:mm:ss)\n\n"
-                + " External IP: " + external_ip + "\n\n"
-                + " Hidden ?: " + is_hidden + "\n\n";
+        IPfinder iPfinder = new IPfinder();
+        try {
+            //con el método get después de execute obtemenos el resultado de doInBackground y así no tocamos elementos UI en el asyntask
+            external_ip = iPfinder.execute().get();
+            String allInformation = "SSID: " + ssid + "\n\n"
+                    + "BSSID: " + bssid + "\n\n"
+                    + " WiFi speed: " + wifi_speed + " Mbps \n\n"
+                    + " WiFi strength: " + wifi_strength + " dBm\n\n"
+                    + " Encryption: " + encryption + "\n\n"
+                    + " Frecuency: " + frecuency + "\n\n"
+                    + " Channel: " + channel + "\n\n"
+                    + " IP: " + ip + "\n\n"
+                    + " Netmask: " + netmask + "\n\n"
+                    + " Gateway: " + gateway + "\n\n"
+                    + " DHPC Server: " + dhcp_server + "\n\n"
+                    + " DNS1: " + dns1 + "\n\n"
+                    + " DNS2: " + dns2 + "\n\n"
+                    + " DHCP lease: " + dhcp_lease + " (hh:mm:ss)\n\n"
+                    + " External IP: " + external_ip + "\n\n"
+                    + " Hidden ?: " + is_hidden + "\n\n";
 
 
-        textView.setText(allInformation);
+            textView.setText(allInformation);
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
 
     }
 
@@ -182,6 +202,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+
 
 
 }
