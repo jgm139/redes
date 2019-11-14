@@ -7,23 +7,20 @@ import android.net.DhcpInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -31,9 +28,10 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PHONE_INFO_PERMISSION = 10;
     private WifiInfo wifiInfo;
     private WifiManager wifiManager;
-    private Context context;
     private List<ScanResult> scanResults;
+    private DhcpInfo dhcpInfo;
     private TextView textView;
+    private Context context;
 
     //Information variables
     String ssid;
@@ -82,39 +80,20 @@ public class MainActivity extends AppCompatActivity {
         }
 
         wifiManager = (WifiManager) this.context.getSystemService(Context.WIFI_SERVICE);
+
+        // A través de la clase WifiManager obtenemos las clases que nos darán la información requerida
         wifiInfo = wifiManager.getConnectionInfo();
         scanResults = wifiManager.getScanResults();
+        dhcpInfo = wifiManager.getDhcpInfo();
 
-        this.ssid = wifiInfo.getSSID();
-        this.bssid = wifiInfo.getBSSID();
-        this.wifi_speed = String.valueOf(wifiInfo.getLinkSpeed());
-        this.wifi_strength = String.valueOf(wifiInfo.getRssi());
+        setWifiInfo();
+        setDhcpInfo();
 
-        this.frecuency = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? String.valueOf(wifiInfo.getFrequency()) : "NO DATA";
-
-        for (ScanResult sr : scanResults) {
-            this.encryption = sr.capabilities;
-            this.channel = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? String.valueOf(getChannelString(sr.channelWidth)) : "NO DATA";
-        }
-
-        // wifiInfo.getIpAddress() returns an integer. This is possible, because an IPv4-address contains 4 bytes (f.e. 192.168.255.2 ==> 4 times 1 byte),
-        // just like an integer consumes 4 byte in Java/Android. By shifting the given integer number, you can determine each of the ip's byte values.
-        this.ip = getIpFormat(wifiInfo.getIpAddress());
-
-        DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
-
-        this.netmask = getIpFormat(dhcpInfo.netmask);
-        this.dns1 = getIpFormat(dhcpInfo.dns1);
-        this.dns2 = getIpFormat(dhcpInfo.dns2);
-        this.gateway = getIpFormat(dhcpInfo.gateway);
-        this.dhcp_server = getIpFormat(dhcpInfo.serverAddress);
-        this.dhcp_lease = getHourFormat(dhcpInfo.leaseDuration);
-
-        this.is_hidden = wifiInfo.getHiddenSSID() ? "Network is hidden" : "Network is visible";
-
+        // A través de esta clase obtenemos la IP externa
         IPfinder iPfinder = new IPfinder();
+
         try {
-            //con el método get después de execute obtemenos el resultado de doInBackground y así no tocamos elementos UI en el asyntask
+            //Con el método get después de execute obtenenos el resultado de doInBackground y así no tocamos elementos UI en el asyntask
             external_ip = iPfinder.execute().get();
             String allInformation = "SSID: " + ssid + "\n\n"
                     + "BSSID: " + bssid + "\n\n"
@@ -131,8 +110,7 @@ public class MainActivity extends AppCompatActivity {
                     + " DNS2: " + dns2 + "\n\n"
                     + " DHCP lease: " + dhcp_lease + " (hh:mm:ss)\n\n"
                     + " External IP: " + external_ip + "\n\n"
-                    + " Hidden ?: " + is_hidden + "\n\n";
-
+                    + " Hidden?: " + is_hidden + "\n\n";
 
             textView.setText(allInformation);
         } catch (ExecutionException e) {
@@ -141,8 +119,65 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+    }
 
+    private void setDhcpInfo() {
+        // Hay un bug de Android con la variable netmask de DhcpInfo, siempre sale 0.0.0.0
+        // getIpFormat(dhcpInfo.netmask)
+        this.netmask = getNetmask(dhcpInfo.ipAddress);
 
+        this.dns1 = getIpFormat(dhcpInfo.dns1);
+        this.dns2 = getIpFormat(dhcpInfo.dns2);
+        this.gateway = getIpFormat(dhcpInfo.gateway);
+        this.dhcp_server = getIpFormat(dhcpInfo.serverAddress);
+        this.dhcp_lease = getHourFormat(dhcpInfo.leaseDuration);
+    }
+
+    private void setWifiInfo() {
+        this.ssid = wifiInfo.getSSID();
+        this.bssid = wifiInfo.getBSSID();
+        this.wifi_speed = String.valueOf(wifiInfo.getLinkSpeed());
+        this.wifi_strength = String.valueOf(wifiInfo.getRssi());
+
+        this.frecuency = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? String.valueOf(wifiInfo.getFrequency()) : "NO DATA";
+
+        for (ScanResult sr : scanResults) {
+            this.encryption = sr.capabilities;
+            this.channel = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? String.valueOf(getChannelString(sr.channelWidth)) : "NO DATA";
+        }
+
+        // wifiInfo.getIpAddress () devuelve un entero.
+        // Esto es posible, porque una dirección IPv4 contiene 4 bytes (por ejemplo, 192.168.255.2 ==> 4 veces 1 byte),
+        // al igual que un número entero consume 4 bytes en Java / Android. Al cambiar el número entero dado,
+        // puede determinar cada uno de los valores de bytes de la ip.
+        this.ip = getIpFormat(wifiInfo.getIpAddress());
+
+        this.is_hidden = wifiInfo.getHiddenSSID() ? "Network is hidden" : "Network is visible";
+    }
+
+    private String getNetmask(int dhcpIpAdress) {
+        int netPrefix = 0;
+
+        try {
+            InetAddress inetAddress = InetAddress.getByName(getIpFormat(dhcpIpAdress));
+            NetworkInterface networkInterface = NetworkInterface.getByInetAddress(inetAddress);
+            for (InterfaceAddress address : networkInterface.getInterfaceAddresses()) {
+                netPrefix = address.getNetworkPrefixLength();
+            }
+        } catch (IOException e) {
+            Log.e("DebugApp", e.getMessage());
+        }
+
+        return getIpFormat(prefixToNetmask(netPrefix));
+    }
+
+    private int prefixToNetmask(int netPrefix) {
+        if(netPrefix < 0 || netPrefix > 32) {
+            throw new IllegalArgumentException("Invalid prefix length");
+        }
+
+        int value = 0xffffffff << (32 - netPrefix);
+        return Integer.reverseBytes(value);
     }
 
     private String getHourFormat(int leaseDuration) {
@@ -153,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
         int hours = minutes / 60;
         minutes = minutes % 60;
 
-        result = hours<24 ? hours + ":" + minutes + ":" + seconds : "24:00:00";
+        result = hours < 24 ? hours + ":" + minutes + ":" + seconds : "24:00:00";
 
         return result;
     }
@@ -185,8 +220,7 @@ public class MainActivity extends AppCompatActivity {
     private static String getIpFormat(int code) {
         String result;
 
-        result = String.format("%d.%d.%d.%d", (code & 0xff), (code >> 8 & 0xff), (code >> 16 & 0xff),
-                (code >> 24 & 0xff));
+        result = String.format("%d.%d.%d.%d", (code & 0xff), (code >> 8 & 0xff), (code >> 16 & 0xff), (code >> 24 & 0xff));
 
         return result;
     }
@@ -202,8 +236,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-
 
 
 }
