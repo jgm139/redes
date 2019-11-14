@@ -3,7 +3,9 @@ package es.ua.eps.readwifi;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.net.DhcpInfo;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -79,9 +81,18 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        wifiManager = (WifiManager) this.context.getSystemService(Context.WIFI_SERVICE);
+        // Comprobamos que el usuario esté conectado a una red WiFi
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+        if (!mWifi.isConnected()) {
+            // En caso de que no esté conectado se lo hacemos saber mediante un mensaje
+            Toast.makeText(this, "Debes estar conectado a una red WiFi", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         // A través de la clase WifiManager obtenemos las clases que nos darán la información requerida
+        wifiManager = (WifiManager) this.context.getSystemService(Context.WIFI_SERVICE);
         wifiInfo = wifiManager.getConnectionInfo();
         scanResults = wifiManager.getScanResults();
         dhcpInfo = wifiManager.getDhcpInfo();
@@ -93,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         IPfinder iPfinder = new IPfinder();
 
         try {
-            //Con el método get después de execute obtenenos el resultado de doInBackground y así no tocamos elementos UI en el asyntask
+            //Con el método get después de execute obtenenos el resultado de doInBackground y así no tocamos elementos UI en el asynctask
             external_ip = iPfinder.execute().get();
             String allInformation = "SSID: " + ssid + "\n\n"
                     + "BSSID: " + bssid + "\n\n"
